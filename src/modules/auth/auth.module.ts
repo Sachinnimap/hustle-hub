@@ -5,6 +5,7 @@ import { SequelizeModule } from "@nestjs/sequelize";
 import { User } from "./models/user.model";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
+import { ResetPassword } from "./models/reset.model";
 
 
 @Module({
@@ -21,7 +22,7 @@ import { ConfigService } from "@nestjs/config";
         }
       },
       inject: [ConfigService]
-    }), SequelizeModule.forFeature([User]), ],
+    }), SequelizeModule.forFeature([User,ResetPassword]), ],
     controllers  : [AuthController,],
     providers : [AuthService]
 })

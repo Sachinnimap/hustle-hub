@@ -41,6 +41,12 @@ export class User extends AbstractModel {
     password : string;
 
     @Column({
+        type : DataType.STRING,
+        allowNull : false,
+    })
+    token : string;
+
+    @Column({
         type : DataType.INTEGER,
         field : 'role_id',
         defaultValue : 1
@@ -48,6 +54,7 @@ export class User extends AbstractModel {
     roleId : number
 
     @BeforeCreate
+    @BeforeUpdate
     static async hashPassword(user:User){
         const password = user.getDataValue('password')
         if(password){

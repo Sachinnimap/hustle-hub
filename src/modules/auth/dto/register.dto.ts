@@ -1,8 +1,6 @@
 import { Transform } from "@nestjs/class-transformer";
 import { Equals, IsEmail, IsNotEmpty, IsString, validate, ValidateIf,Matches, IsMobilePhone } from "@nestjs/class-validator";
 
-
-
 export class RegisterDto{
 @Transform(({value})=> value.trim())
 @IsNotEmpty({message : "Name is required"})
