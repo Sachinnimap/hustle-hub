@@ -17,7 +17,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let errorResponse = new Response(500,'something went wrong')
     const exceptionMsg = (exception as any)?.response?.message || (exception as any)?.message;
 
-    console.log("exception",exception)
     if (exception instanceof HttpException) {
       errorResponse = new Response(exception.getStatus(), exceptionMsg)
     } else if (exception instanceof BusinessException) {
@@ -25,7 +24,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } 
 
     if (errorResponse.statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
-      console.log("INTERNAL SERVER ERROR")
+      errorResponse =  new Response(500,exceptionMsg) // this will store in db as error logger
+      console.log("INTERNAL SERVER ERROR",exceptionMsg) 
     }
     response.status(errorResponse.statusCode).json(errorResponse);
   }
