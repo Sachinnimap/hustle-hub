@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Request } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import {Response} from "../../common/utils/response"
@@ -32,5 +32,10 @@ export class AuthController{
   @Post('/reset-password')
   async resetPassword(@Body() body: ResetPasswordDto){
     return new Response(201,'password reset success',await this.authService.resetPassword(body))
+  }
+
+   @Delete('/')
+  async delete(@Body() body:any, @Request() req){
+    return new Response(201,'Deleted successfully',await this.authService.delete(body,req))
   }
 }

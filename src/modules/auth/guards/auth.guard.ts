@@ -13,6 +13,7 @@ export class AuthUserGuard implements CanActivate {
     context: ExecutionContext,
   ): Promise<boolean> {
     try {
+      console.log("run!")
       const request = context.switchToHttp().getRequest();
       const token = request.headers['authorization']?.split(' ')[1] || null;
       const payload = await this.jwtService.verifyAsync(token);

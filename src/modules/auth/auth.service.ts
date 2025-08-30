@@ -8,6 +8,7 @@ import {JwtService} from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { ResetDto, ResetPasswordDto } from './dto/reset.dto';
 import { ResetPassword } from './models/reset.model';
+import { Op } from 'sequelize';
 
 export class AuthService {
   constructor(
@@ -38,11 +39,12 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
-    const user = await this.userModel.findOne({ where: { email } });
+    const user = await this.userModel.findOne({ where: { email } ,raw:true});
     if (!user) throw new BusinessException('Invalid credentials');
 
     console.log("compa",password)
     console.log("pass",user)
+    console.log(user.password)
     const comparePassword =  await bcrypt.compare(password,user.password)
     if(!comparePassword) throw new BusinessException("Invalid credentials")
 
@@ -85,6 +87,15 @@ export class AuthService {
 
      return null;
 
+  }
+
+  async delete(body,req){
+    const {id} = body
+    const {roleId} = req?.user
+
+    if(roleId != 1) throw new BusinessException("Only admin can deleted!")
+      await this.userModel.update({deleted: true},{where:{id , role_id: { [Op.ne]: 1 }}})
+    return null;
   }
 
 

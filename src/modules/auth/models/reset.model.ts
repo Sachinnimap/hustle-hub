@@ -3,7 +3,7 @@ import { Column, DataType, Model, Table } from "sequelize-typescript";
 
 
 @Table({
-    tableName : 'reset-password',
+    tableName : 'reset_password',
     timestamps : true,
     freezeTableName : true
 })

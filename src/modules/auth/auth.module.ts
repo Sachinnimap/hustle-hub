@@ -6,6 +6,7 @@ import { User } from "./models/user.model";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { ResetPassword } from "./models/reset.model";
+import { RoleGuard } from "./guards/role.guard";
 
 
 @Module({

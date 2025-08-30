@@ -14,14 +14,14 @@ export class Permission extends AbstractModel{
          allowNull :false,
          field : 'action_name'
     })
-    action_name : string 
+    actionName : string 
 
      @Column({
          type : DataType.STRING,
          allowNull :false,
          field : 'base_url'
     })
-    base_url : string
+    baseUrl : string
 
      @Column({
          type : DataType.STRING,

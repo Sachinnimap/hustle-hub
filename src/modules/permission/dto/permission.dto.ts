@@ -1,8 +1,8 @@
 import { Transform } from "class-transformer";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 
-export class PermissionDto{
+export class CreatePermissionDto{
 //actionName,baseUrl,method,path,description
 
     @Transform(({value})=> value?.trim())
@@ -22,6 +22,6 @@ export class PermissionDto{
     @IsNotEmpty({message : "path is required"})
     path : string
 
-    @Transform(({value})=> value?.trim())
+    @IsOptional()
     description : string
 }
