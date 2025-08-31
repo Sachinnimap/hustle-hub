@@ -7,6 +7,7 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { ResetPassword } from "./models/reset.model";
 import { RoleGuard } from "./guards/role.guard";
+import { MailModule } from "../mail/mail.module";
 
 
 @Module({
@@ -14,7 +15,6 @@ import { RoleGuard } from "./guards/role.guard";
     JwtModule.registerAsync({
      global: true,
       useFactory: (configService: ConfigService) => {
-       console.log("env",configService.get('jwt.secretKey'))
         return {
           secret: configService.get('jwt.secretKey'),
           signOptions: {
@@ -23,8 +23,9 @@ import { RoleGuard } from "./guards/role.guard";
         }
       },
       inject: [ConfigService]
-    }), SequelizeModule.forFeature([User,ResetPassword]), ],
+    }), SequelizeModule.forFeature([User,ResetPassword]),MailModule ],
     controllers  : [AuthController,],
-    providers : [AuthService]
+    providers : [AuthService],
+     exports:[SequelizeModule.forFeature([User,])]
 })
 export class AuthModule{}

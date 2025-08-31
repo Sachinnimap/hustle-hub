@@ -11,5 +11,9 @@ export default () => ({
     jwt : {
         secretKey : process.env.SERCRET_KEY,
         expirationTime : process.env.EXPIRATION_TIME
+    },
+    mail : {
+        smtp_user : process.env.SMTP_USER,
+        smtp_pass : process.env.SMTP_PASS
     }
 })

@@ -1,5 +1,7 @@
-import { Column, DataType, Table } from "sequelize-typescript";
+import { BelongsTo, Column, DataType, Table } from "sequelize-typescript";
 import { AbstractModel } from "src/common/models/abstract.model";
+import { User } from "src/modules/auth/models/user.model";
+import { Job } from "src/modules/job/models/job.model";
 
 @Table({
     tableName : 'job_apply',
@@ -23,4 +25,9 @@ export class JobApply extends AbstractModel{
     })
      userId : number;
 
+     @BelongsTo(()=> User, 'userId')
+     user : User;
+
+     @BelongsTo(()=> Job, 'jobId')
+     job : Job
 }

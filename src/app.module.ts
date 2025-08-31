@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/database.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { JobModule } from './modules/job/job.module';
 import { JobApplyModule } from './modules/job-apply/job-apply.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { JobApplyModule } from './modules/job-apply/job-apply.module';
       DatabaseModule,
       PermissionModule,
       JobModule,
-      JobApplyModule
+      JobApplyModule,
+      MailModule
   ],
   providers: [
     {

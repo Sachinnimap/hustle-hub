@@ -9,9 +9,12 @@ import * as bcrypt from 'bcrypt'
 import { ResetDto, ResetPasswordDto } from './dto/reset.dto';
 import { ResetPassword } from './models/reset.model';
 import { Op } from 'sequelize';
+import { MailService } from '../mail/mail.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 export class AuthService {
   constructor(
+    private mailService :MailService,
     private jwtService : JwtService,
     @InjectModel(User) private userModel: typeof User,
     @InjectModel(ResetPassword) private resetPasswordModel : typeof ResetPassword
@@ -60,41 +63,84 @@ export class AuthService {
         return null;
   }
  
-  async reset(body : ResetDto){
+  async resetPassword(body : ResetDto){
     const {email} =  body;
-    const getUser = this.userModel.findOne({where : {email}})
+    const getUser = await this.userModel.findOne({where : {email}})
     if(!getUser) throw new BusinessException("Email not registered!")
       const otp = Math.floor(100000 + Math.random() * 900000);
-    console.log("OTP",otp)
-    //CREATE OTP
-    await this.resetPasswordModel.create({email,otp})
-    //TODO Sent OTP
+      const checkEmail = await this.resetPasswordModel.findOne({where:{email}})
+      if(checkEmail) await this.resetPasswordModel.update({otp},{where : {email}})
+      else await this.resetPasswordModel.create({email,otp})
+  
+     this.mailService.appliedJobMail(email,`Reset OTP ${otp}`,`Your OTP is ${otp}`);
     return null
   }
 
 
-  async resetPassword(body : ResetPasswordDto){
+  async varifyResetPassword(body : ResetPasswordDto){
     const { confirmPassword,email,otp,password} = body;
         if (password !== confirmPassword)
       throw new BusinessException('Password not matched!');
 
-   const userData =  await this.resetPasswordModel.findOne({where :{email}})
-   if(!userData) throw new BusinessException("Invalid Data")
+   const userData =  await this.resetPasswordModel.findOne({where :{email},raw :true})
+   if(!userData) throw new BusinessException("Invalid email address")
 
     if(userData.otp != otp) throw new BusinessException("Invalid OTP")
-
-     await this.userModel.update({password},{where :{email}})
-
+     await this.userModel.update({password},{where :{email},individualHooks: true})
      return null;
-
   }
 
-  async delete(body,req){
-    const {id} = body
+async getAllCandidates(query :PaginationDto ,req:any){
+ const { pageNo = 1, limit = 10 } = query;
+   const {roleId} =  req?.user
+   if(roleId !== 1) throw new BusinessException("Access denied! Only admin can access")
+      
+    const candidates =  await  this.userModel.findAll({
+      where: { deleted: false ,roleId: 3},
+      limit : limit,
+      offset : (pageNo - 1)* limit,
+      order : [["id","DESC"]],
+      attributes : ['name','mobile','email','createdAt','updatedAt']
+    });
+
+    const total = await this.userModel.count({
+      where: { deleted: false ,roleId: 2}})
+
+      return {
+        total ,
+        candidates
+      }
+}
+
+async getAllRecruiters(query : PaginationDto, req:any){
+   const { pageNo = 1, limit = 10 } = query;
+   const {roleId} =  req?.user
+   if(roleId !== 1) throw new BusinessException("Access denied! Only admin can access")
+    const recruiters =  await  this.userModel.findAll({
+      where: { deleted: false ,roleId: 2},
+      limit : limit,
+      offset : (pageNo - 1)* limit,
+      order : [["id","DESC"]],
+      attributes : ['name','mobile','email','createdAt','updatedAt']
+    });
+
+    const total = await this.userModel.count({
+      where: { deleted: false ,roleId: 2}})
+
+      return {
+        total ,
+        recruiters
+      }
+}
+
+  async delete(id:number,req:any){
     const {roleId} = req?.user
 
     if(roleId != 1) throw new BusinessException("Only admin can deleted!")
-      await this.userModel.update({deleted: true},{where:{id , role_id: { [Op.ne]: 1 }}})
+    const result =   await this.userModel.update({deleted: true},{where:{id , role_id: { [Op.ne]: 1 }}})
+    
+   if (Array.isArray(result) && result[0] === 0) throw new BusinessException(`Job not found`);
+
     return null;
   }
 

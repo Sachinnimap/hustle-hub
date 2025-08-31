@@ -7,6 +7,7 @@ import { Job } from "./models/job.model";
 @Module({
     imports :[SequelizeModule.forFeature([Job])],
     controllers : [JobController],
-    providers : [JobService]
+    providers : [JobService],
+    exports : [SequelizeModule.forFeature([Job])]
 })
 export class JobModule{}

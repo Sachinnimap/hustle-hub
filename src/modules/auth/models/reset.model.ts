@@ -22,12 +22,6 @@ export class ResetPassword extends Model{
     @Column({
         type : DataType.STRING,
         allowNull : false,
-        validate : {
-            let : {
-                args : [6,6],
-                message: "Please enter valid OTP"
-            }
-        }
     })
     otp : string
 }

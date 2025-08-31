@@ -49,13 +49,14 @@ export class User extends AbstractModel {
     @Column({
         type : DataType.INTEGER,
         field : 'role_id',
-        defaultValue : 1
+        defaultValue : 3 
     })
     roleId : number
 
     @BeforeCreate
     @BeforeUpdate
     static async hashPassword(user:User){
+        console.log("run")
         const password = user.getDataValue('password')
         if(password){
             const generateSalt = await bcrypt.genSalt(10)
