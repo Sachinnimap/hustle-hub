@@ -8,7 +8,7 @@ import { PaginationDto } from "../../common/dto/pagination.dto";
 
 
 @Controller('job')
-// @UseGuards(AuthUserGuard,RoleG`uard)
+@UseGuards(AuthUserGuard,RoleGuard)
 export class JobController{
     constructor(private jobService: JobService){}
 
@@ -23,8 +23,8 @@ export class JobController{
     }
 
      @Delete(':id')
-      async delete(@Param('id') id:number, @Request() req){
-        return new Response(201,'Deleted successfully',await this.jobService.delete(+id,req))
+      async delete(@Param('id') id:number){
+        return new Response(201,'Deleted successfully',await this.jobService.delete(+id))
       }
 
 

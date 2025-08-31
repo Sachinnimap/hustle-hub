@@ -18,7 +18,6 @@ export class JobApplyService {
 
   async create(body: CreateJobApplyDto, req: any) {
     const { userId} = req?.user;
-    // const userId = 1;
     const { jobId } = body;
 
     const candidate = await this.userModel.findOne({ where: { id: userId } ,raw:true});
@@ -45,7 +44,7 @@ export class JobApplyService {
     const {userId} =  req?.user;
 
     const appliedJobData = await this.jobApplyModel.findAll({
-      where: { deleted: false, user_id: userId},
+      where: { deleted: false,  userId},
       include: {
         model: Job,
         attributes: ['title', 'description', 'createdAt', 'updatedAt'],
@@ -57,7 +56,7 @@ export class JobApplyService {
     });
 
     const count = await this.jobApplyModel.count({
-      where: { deleted: false, user_id: 1 },
+      where: { deleted: false,  userId },
     });
 
     return {
@@ -66,11 +65,8 @@ export class JobApplyService {
     };
   }
 
-   async findAll(query: PaginationDto, req: any) {
+   async findAll(query: PaginationDto) {
     const { limit = 10, pageNo = 1 } = query;
-    // const {roleId} =  req?.user;
-
-    // if(roleId != 1) throw new BusinessException("Access Denied! Only admin can access")
 
     const jobData = await this.jobApplyModel.findAll({
       where: { deleted: false},

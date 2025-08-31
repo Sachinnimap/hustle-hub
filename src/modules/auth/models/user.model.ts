@@ -42,7 +42,7 @@ export class User extends AbstractModel {
 
     @Column({
         type : DataType.STRING,
-        allowNull : false,
+        // allowNull : false,
     })
     token : string;
 
@@ -58,8 +58,10 @@ export class User extends AbstractModel {
     static async hashPassword(user:User){
         console.log("run")
         const password = user.getDataValue('password')
-        if(password){
+        if(user.changed("password")){
             const generateSalt = await bcrypt.genSalt(10)
+            console.log("password",password)
+            console.log("generated",generateSalt)
             const hashedPassword =  await bcrypt.hash(password,generateSalt)
             console.log("hashedPasswor",hashedPassword)
             user.setDataValue('password',hashedPassword)

@@ -11,10 +11,7 @@ export class JobService {
   constructor(@InjectModel(Job) private jobModel: typeof Job) {}
 
   async createJob(body: CreateJobDto, req) {
-    const { roleId, userId } = req?.user; //  req?.['user']['roleId']
-
-    if (roleId != 2)
-      throw new BusinessException('Only recruiter can create job');
+    const { userId } = req?.user;
     await this.jobModel.create({ ...body, userId: userId });
     return null;
   }
@@ -43,11 +40,7 @@ export class JobService {
       }
   }
 
-async delete(id:number,req :any){
-  console.log("id",id)
-    // const {roleId} = req?.user
-  
-      // if(roleId != 1) throw new BusinessException("Only admin can deleted!")
+async delete(id:number){
        const result =  await this.jobModel.update({deleted: true},{where:{id}})
 
        if (Array.isArray(result) && result[0] === 0) {

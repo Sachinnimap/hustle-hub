@@ -30,9 +30,8 @@ export class AuthService {
 
     if (user) throw new BusinessException('User already exist');
    const userData =  await this.userModel.create({ name, email, password, mobile });
-
-   const token = await this.createToken({userId:userData.id,roleId:userData.roleId})
-                 await userData.update({token})
+   const token = await this.createToken({userId:userData.id,roleId:userData.getDataValue('roleId')??3})
+                 await userData.update({token},{where :{individualHooks: false}})
     return {
         name : userData.name,
         token : token
@@ -42,24 +41,26 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
-    const user = await this.userModel.findOne({ where: { email } ,raw:true});
+    const user = await this.userModel.findOne({ where: { email } });
     if (!user) throw new BusinessException('Invalid credentials');
 
-    console.log("compa",password)
-    console.log("pass",user)
-    console.log(user.password)
-    const comparePassword =  await bcrypt.compare(password,user.password)
+    const hashedPassword = user.getDataValue('password')
+    const roleId = user.getDataValue("roleId")
+    console.log("roleId",roleId)
+    const comparePassword =  await bcrypt.compare(password,hashedPassword)
     if(!comparePassword) throw new BusinessException("Invalid credentials")
 
-    const token = await this.createToken({userId: user.id,roleId:user.roleId})
+    const token = await this.createToken({userId: user.id,roleId})
+     await user.update({token},{where :{individualHooks: false}})
     return {
         name : user.name,
         token : token
     };
   }
 
-  async logout(id:number){
-        await this.userModel.update({token:null},{where:{id}})
+  async logout(req:any){
+    const {userId}= req.user;
+        await this.userModel.update({token:null},{where:{id:userId}})
         return null;
   }
  
@@ -90,10 +91,8 @@ export class AuthService {
      return null;
   }
 
-async getAllCandidates(query :PaginationDto ,req:any){
+async getAllCandidates(query :PaginationDto ){
  const { pageNo = 1, limit = 10 } = query;
-   const {roleId} =  req?.user
-   if(roleId !== 1) throw new BusinessException("Access denied! Only admin can access")
       
     const candidates =  await  this.userModel.findAll({
       where: { deleted: false ,roleId: 3},
@@ -104,7 +103,7 @@ async getAllCandidates(query :PaginationDto ,req:any){
     });
 
     const total = await this.userModel.count({
-      where: { deleted: false ,roleId: 2}})
+      where: { deleted: false ,roleId: 3}})
 
       return {
         total ,
@@ -112,10 +111,8 @@ async getAllCandidates(query :PaginationDto ,req:any){
       }
 }
 
-async getAllRecruiters(query : PaginationDto, req:any){
+async getAllRecruiters(query : PaginationDto){
    const { pageNo = 1, limit = 10 } = query;
-   const {roleId} =  req?.user
-   if(roleId !== 1) throw new BusinessException("Access denied! Only admin can access")
     const recruiters =  await  this.userModel.findAll({
       where: { deleted: false ,roleId: 2},
       limit : limit,
@@ -133,13 +130,10 @@ async getAllRecruiters(query : PaginationDto, req:any){
       }
 }
 
-  async delete(id:number,req:any){
-    const {roleId} = req?.user
-
-    if(roleId != 1) throw new BusinessException("Only admin can deleted!")
+  async delete(id:number){
     const result =   await this.userModel.update({deleted: true},{where:{id , role_id: { [Op.ne]: 1 }}})
     
-   if (Array.isArray(result) && result[0] === 0) throw new BusinessException(`Job not found`);
+   if (Array.isArray(result) && result[0] === 0) throw new BusinessException(`user not found`);
 
     return null;
   }
@@ -147,9 +141,7 @@ async getAllRecruiters(query : PaginationDto, req:any){
 
   async createToken(payload:any) {
     const accessToken = await this.jwtService.signAsync(payload);
-    return {
-      accessToken,
-    };
+    return accessToken;
 }
 
 }
