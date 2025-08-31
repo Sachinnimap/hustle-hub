@@ -9,6 +9,7 @@ import { PermissionModule } from './modules/permission/permission.module';
 import { JobModule } from './modules/job/job.module';
 import { JobApplyModule } from './modules/job-apply/job-apply.module';
 import { MailModule } from './modules/mail/mail.module';
+import { ExportModule } from './modules/export/export.module';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { MailModule } from './modules/mail/mail.module';
       PermissionModule,
       JobModule,
       JobApplyModule,
-      MailModule
+      MailModule,
+      ExportModule
   ],
   providers: [
     {

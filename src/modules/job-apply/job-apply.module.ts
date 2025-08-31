@@ -11,7 +11,8 @@ import { JobModule } from "../job/job.module";
 @Module({
     imports :[SequelizeModule.forFeature([JobApply]),MailModule,AuthModule,JobModule],
     controllers : [JobApplyController],
-    providers : [JobApplyService]
+    providers : [JobApplyService],
+    exports : [JobApplyService]
 })
 export class JobApplyModule{
 

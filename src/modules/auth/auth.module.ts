@@ -26,6 +26,6 @@ import { MailModule } from "../mail/mail.module";
     }), SequelizeModule.forFeature([User,ResetPassword]),MailModule ],
     controllers  : [AuthController,],
     providers : [AuthService],
-     exports:[SequelizeModule.forFeature([User,])]
+     exports:[SequelizeModule.forFeature([User,]),AuthService]
 })
 export class AuthModule{}
