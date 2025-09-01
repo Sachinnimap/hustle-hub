@@ -6,47 +6,91 @@ import { Request } from 'express';
 import { Query } from '@nestjs/common';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { User } from '../auth/models/user.model';
+import { Op, Sequelize,QueryTypes } from 'sequelize';
 
 export class JobService {
-  constructor(@InjectModel(Job) private jobModel: typeof Job) {}
+  constructor(
+    private sequelize : Sequelize,
+    @InjectModel(Job) private jobModel: typeof Job) {}
 
   async createJob(body: CreateJobDto, req) {
     const { userId } = req?.user;
-    await this.jobModel.create({ ...body, userId: userId });
+    
+     const { title, description } = body;
+
+  await this.sequelize.query(
+    `
+      INSERT INTO job (title, description, user_id, created_at, updated_at)
+      VALUES (:title, :description, :userId, NOW(), NOW())
+    `,
+    {
+      replacements: { title, description: description || null, userId },
+      type: QueryTypes.INSERT,
+    }
+  );
+
     return null;
   }
 
-  async findAll(query: PaginationDto) {
-    const { pageNo = 1, limit = 10 } = query;
+async findAll(query: PaginationDto) {
+  const { pageNo = 1, limit = 10 } = query;
+  const offset = (pageNo - 1) * limit;
 
-    const jobs=  await  this.jobModel.findAll({
-      where: { deleted: false },
-       include: {
-        model: User,
-        attributes: ["name"],
-      },
-      limit : limit,
-      offset : (pageNo - 1)* limit,
-      order : [["id","DESC"]],
-      attributes : ['title','description','createdAt','updatedAt']
-    });
-
-    const count = await this.jobModel.count({
-      where: { deleted: false }})
-
-      return {
-        total : count,
-        jobs
-      }
-  }
-
-async delete(id:number){
-       const result =  await this.jobModel.update({deleted: true},{where:{id}})
-
-       if (Array.isArray(result) && result[0] === 0) {
-      throw new BusinessException(`Job not found`);
+  const jobs = await this.sequelize.query(
+    `
+      SELECT 
+        j.id,
+        j.title,
+        j.description,
+        j.created_at,
+        j.updated_at,
+        u.name AS user_name
+      FROM job j
+      JOIN users u ON j.user_id = u.id
+      WHERE j.deleted = false
+      ORDER BY j.id DESC
+      LIMIT :limit OFFSET :offset
+    `,
+    {
+      replacements: { limit, offset },
+      type: QueryTypes.SELECT,
     }
-      return null;
+  );
+
+  const countResult = await this.sequelize.query<{ count: string }>(
+    `
+      SELECT COUNT(*) AS count
+      FROM job
+      WHERE deleted = false
+    `,
+    {
+      type: QueryTypes.SELECT,
+    }
+  );
+
+  const total = countResult[0].count;
+
+  return {
+    total,
+    jobs,
+  };
+}
+async delete(id: number) {
+  await this.sequelize.query(
+    `
+      UPDATE job
+      SET deleted = true, updated_at = NOW()
+      WHERE id = :id
+      RETURNING id
+    `,
+    {
+      replacements: { id },
+      type: QueryTypes.UPDATE
+    }
+  );
+
+
+  return null;
 }
 
 }

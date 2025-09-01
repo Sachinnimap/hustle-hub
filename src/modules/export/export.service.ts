@@ -14,10 +14,10 @@ constructor(
 
 async exportAllCandidates(){
     const candidates = await this.authService.getAllCandidates({pageNo:1,limit:100})
-    const  plainData = candidates.candidates.map(c => c.get({ plain: true }))
-    console.log('plaine',plainData)
+    // const  plainData = candidates.candidates.map(c => c.get({ plain: true }))
+    // console.log('plaine',plainData)
     const data = await this.exportToExcel(
-      plainData,
+      candidates.candidates,
       'Candidates',
       [
         { header: 'Name', key: 'name' },
@@ -30,9 +30,9 @@ async exportAllCandidates(){
 
 async exportAllRecruiters(){
     const result = await this.authService.getAllRecruiters({pageNo:1,limit:100})
-    const  plainData = result.recruiters.map(c => c.get({ plain: true }))
+    // const  plainData = result.recruiters.map(c => c.get({ plain: true }))
     const data = await this.exportToExcel(
-      plainData,
+      result.recruiters,
       'Recruiters',
       [
         { header: 'Name', key: 'name' },

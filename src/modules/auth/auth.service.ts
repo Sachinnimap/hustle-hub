@@ -8,12 +8,14 @@ import {JwtService} from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { ResetDto, ResetPasswordDto } from './dto/reset.dto';
 import { ResetPassword } from './models/reset.model';
-import { Op } from 'sequelize';
+import { Op, Sequelize,QueryTypes } from 'sequelize';
 import { MailService } from '../mail/mail.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
+
 export class AuthService {
   constructor(
+    private readonly sequelize: Sequelize,
     private mailService :MailService,
     private jwtService : JwtService,
     @InjectModel(User) private userModel: typeof User,
@@ -26,14 +28,36 @@ export class AuthService {
     if (password !== confirmPassword)
       throw new BusinessException('Password not matched!');
 
-    const user = await this.userModel.findOne({ where: { email } });
+    const [user] =  await this.sequelize.query(
+    `SELECT id FROM users WHERE email = :email LIMIT 1`,
+    {
+      replacements: { email },
+      type: QueryTypes.SELECT,
+    },
+  );
 
-    if (user) throw new BusinessException('User already exist');
-   const userData =  await this.userModel.create({ name, email, password, mobile });
-   const token = await this.createToken({userId:userData.id,roleId:userData.getDataValue('roleId')??3})
-                 await userData.update({token},{where :{individualHooks: false}})
+  if (user) throw new BusinessException('User already exist');
+   const [userData] = await this.sequelize.query(
+    `INSERT INTO users (name, email, password, mobile, role_id)
+     VALUES (:name, :email, :password, :mobile, 3)
+     RETURNING id, name, role_id`,
+    {
+      replacements: { name, email, password, mobile },
+      type: QueryTypes.INSERT,
+    },
+  );
+
+   const token = await this.createToken({userId:userData['id'],roleId:userData['roleId']??3})
+                 
+   await this.sequelize.query(
+    `UPDATE users SET token = :token WHERE id = :id`,
+    {
+      replacements: { token, id: userData['id'] },
+      type: QueryTypes.UPDATE,
+    },
+  );
     return {
-        name : userData.name,
+        name : userData['name'],
         token : token
     };
   }
@@ -41,37 +65,87 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
-    const user = await this.userModel.findOne({ where: { email } });
+      const [user] = await this.sequelize.query(
+    `SELECT id, name, email, password, role_id 
+     FROM users 
+     WHERE email = :email 
+     LIMIT 1`,
+    {
+      replacements: { email },
+      type: QueryTypes.SELECT,
+    },
+  );
     if (!user) throw new BusinessException('Invalid credentials');
 
-    const hashedPassword = user.getDataValue('password')
-    const roleId = user.getDataValue("roleId")
-    console.log("roleId",roleId)
+    const hashedPassword = user['password']
+    const roleId = user['roleId']
     const comparePassword =  await bcrypt.compare(password,hashedPassword)
     if(!comparePassword) throw new BusinessException("Invalid credentials")
 
-    const token = await this.createToken({userId: user.id,roleId})
-     await user.update({token},{where :{individualHooks: false}})
+    const token = await this.createToken({userId: user['id'],roleId})
+     await this.sequelize.query(
+    `UPDATE users SET token = :token WHERE id = :id`,
+    {
+      replacements: { token, id: user['id'] },
+      type: QueryTypes.UPDATE,
+    },
+  );
     return {
-        name : user.name,
+        name : user['name'],
         token : token
     };
   }
 
   async logout(req:any){
     const {userId}= req.user;
-        await this.userModel.update({token:null},{where:{id:userId}})
+       await this.sequelize.query(
+    `UPDATE users 
+     SET token = NULL 
+     WHERE id = :id`,
+    {
+      replacements: { id: userId },
+      type: QueryTypes.UPDATE,
+    },
+  );
         return null;
   }
  
   async resetPassword(body : ResetDto){
     const {email} =  body;
-    const getUser = await this.userModel.findOne({where : {email}})
+     const [getUser] = await this.sequelize.query(
+    `SELECT id FROM user WHERE email = :email LIMIT 1`,
+    {
+      replacements: { email },
+      type: QueryTypes.SELECT,
+    },
+  );
     if(!getUser) throw new BusinessException("Email not registered!")
       const otp = Math.floor(100000 + Math.random() * 900000);
-      const checkEmail = await this.resetPasswordModel.findOne({where:{email}})
-      if(checkEmail) await this.resetPasswordModel.update({otp},{where : {email}})
-      else await this.resetPasswordModel.create({email,otp})
+
+      const [checkEmail] = await this.sequelize.query(
+    `SELECT id FROM reset_password WHERE email = :email LIMIT 1`,
+    {
+      replacements: { email },
+      type: QueryTypes.SELECT,
+    },
+  );
+      if(checkEmail){ await this.sequelize.query(
+      `UPDATE reset_password SET otp = :otp WHERE email = :email`,
+      {
+        replacements: { otp, email },
+        type: QueryTypes.UPDATE,
+      },
+    );
+  }
+      else{
+        await this.sequelize.query(
+      `INSERT INTO reset_password (email, otp) VALUES (:email, :otp)`,
+      {
+        replacements: { email, otp },
+        type: QueryTypes.INSERT,
+      },
+    );
+      }
   
      this.mailService.appliedJobMail(email,`Reset OTP ${otp}`,`Your OTP is ${otp}`);
     return null
@@ -83,60 +157,118 @@ export class AuthService {
         if (password !== confirmPassword)
       throw new BusinessException('Password not matched!');
 
-   const userData =  await this.resetPasswordModel.findOne({where :{email},raw :true})
+     const [userData] = await this.sequelize.query(
+    `SELECT otp FROM reset_passwords WHERE email = :email LIMIT 1`,
+    {
+      replacements: { email },
+      type: QueryTypes.SELECT,
+    },
+  );
    if(!userData) throw new BusinessException("Invalid email address")
 
-    if(userData.otp != otp) throw new BusinessException("Invalid OTP")
-     await this.userModel.update({password},{where :{email},individualHooks: true})
+    if(userData["otp"] != otp) throw new BusinessException("Invalid OTP")
+     await this.sequelize.query(
+    `UPDATE users SET password = :password WHERE email = :email`,
+    {
+      replacements: { password, email },
+      type:QueryTypes.UPDATE,
+    },
+  );
      return null;
   }
 
 async getAllCandidates(query :PaginationDto ){
  const { pageNo = 1, limit = 10 } = query;
-      
-    const candidates =  await  this.userModel.findAll({
-      where: { deleted: false ,roleId: 3},
-      limit : limit,
-      offset : (pageNo - 1)* limit,
-      order : [["id","DESC"]],
-      attributes : ['name','mobile','email','createdAt','updatedAt']
-    });
+ const offset = (pageNo - 1) * limit;
 
-    const total = await this.userModel.count({
-      where: { deleted: false ,roleId: 3}})
+
+    const candidates = await this.sequelize.query(
+    `
+      SELECT name, mobile, email, "createdAt", "updatedAt"
+      FROM users
+      WHERE deleted = false AND "roleId" = 3
+      ORDER BY id DESC
+      LIMIT :limit OFFSET :offset
+    `,
+    {
+      replacements: { limit, offset },
+      type: QueryTypes.SELECT,
+    },
+  );
+
+    const [result] = await this.sequelize.query(
+    `
+      SELECT COUNT(*)::int AS total
+      FROM users
+      WHERE deleted = false AND "roleId" = 3
+    `,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
 
       return {
-        total ,
+        total:result["total"] ,
         candidates
       }
 }
 
-async getAllRecruiters(query : PaginationDto){
-   const { pageNo = 1, limit = 10 } = query;
-    const recruiters =  await  this.userModel.findAll({
-      where: { deleted: false ,roleId: 2},
-      limit : limit,
-      offset : (pageNo - 1)* limit,
-      order : [["id","DESC"]],
-      attributes : ['name','mobile','email','createdAt','updatedAt']
-    });
+async getAllRecruiters(query: PaginationDto) {
+  const { pageNo = 1, limit = 10 } = query;
+  const offset = (pageNo - 1) * limit;
 
-    const total = await this.userModel.count({
-      where: { deleted: false ,roleId: 2}})
+  // 1. Fetch paginated recruiters
+  const recruiters = await this.sequelize.query(
+    `
+      SELECT name, mobile, email, "createdAt", "updatedAt"
+      FROM users
+      WHERE deleted = false AND "roleId" = 2
+      ORDER BY id DESC
+      LIMIT :limit OFFSET :offset
+    `,
+    {
+      replacements: { limit, offset },
+      type: QueryTypes.SELECT,
+    },
+  );
 
-      return {
-        total ,
-        recruiters
-      }
+  // 2. Get total count
+  const [result] = await this.sequelize.query(
+    `
+      SELECT COUNT(*)::int AS total
+      FROM users
+      WHERE deleted = false AND "roleId" = 2
+    `,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
+
+  return {
+    total: result["total"],
+    recruiters,
+  };
 }
 
-  async delete(id:number){
-    const result =   await this.userModel.update({deleted: true},{where:{id , role_id: { [Op.ne]: 1 }}})
-    
-   if (Array.isArray(result) && result[0] === 0) throw new BusinessException(`user not found`);
 
-    return null;
-  }
+async delete(id: number) {
+  await this.sequelize.query(
+    `
+      UPDATE users
+      SET deleted = true
+      WHERE id = :id AND "roleId" != 1
+      RETURNING id
+    `,
+    {
+      replacements: { id },
+      type: QueryTypes.UPDATE,
+    },
+  )
+
+
+  return null;
+}
+
 
 
   async createToken(payload:any) {
