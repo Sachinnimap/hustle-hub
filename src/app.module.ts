@@ -19,7 +19,7 @@ import { ExportModule } from './modules/export/export.module';
       }),
       AuthModule,
       DatabaseModule,
-      PermissionModule,
+      // PermissionModule,
       JobModule,
       JobApplyModule,
       MailModule,

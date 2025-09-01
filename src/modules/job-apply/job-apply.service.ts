@@ -1,9 +1,6 @@
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateJobApplyDto } from './dto/create-job-apply.dto';
-import { JobApply } from './models/job-apply.model';
-import { Job } from '../job/models/job.model';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { User } from '../auth/models/user.model';
 import { MailService } from '../mail/mail.service';
 import { Op, QueryTypes, Sequelize } from 'sequelize';
 import { BusinessException } from 'src/common/exceptions/bussiness.exception';
@@ -11,10 +8,7 @@ import { BusinessException } from 'src/common/exceptions/bussiness.exception';
 export class JobApplyService {
   constructor(
     private sequelize :Sequelize,
-    private mailService: MailService,
-    @InjectModel(JobApply) private jobApplyModel: typeof JobApply,
-    @InjectModel(User) private userModel: typeof User,
-    @InjectModel(Job) private jobModel: typeof Job,
+    private mailService: MailService
   ) {}
 
   async create(body: CreateJobApplyDto, req: any) {

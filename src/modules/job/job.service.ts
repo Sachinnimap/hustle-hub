@@ -1,17 +1,13 @@
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateJobDto } from './dto/createJob.dto';
-import { Job } from './models/job.model';
 import { BusinessException } from 'src/common/exceptions/bussiness.exception';
-import { Request } from 'express';
 import { Query } from '@nestjs/common';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import { User } from '../auth/models/user.model';
 import { Op, Sequelize,QueryTypes } from 'sequelize';
 
 export class JobService {
   constructor(
-    private sequelize : Sequelize,
-    @InjectModel(Job) private jobModel: typeof Job) {}
+    private sequelize : Sequelize) {}
 
   async createJob(body: CreateJobDto, req) {
     const { userId } = req?.user;

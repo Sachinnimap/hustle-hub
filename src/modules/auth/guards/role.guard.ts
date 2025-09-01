@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
 import { Sequelize } from 'sequelize-typescript';
 import { QueryTypes } from 'sequelize';
 import { BusinessException } from 'src/common/exceptions/bussiness.exception';
-import { Permission } from 'src/modules/permission/models/permission.model';
 import { PermissionService } from 'src/modules/permission/permission.service';
 
 @Injectable()

@@ -2,10 +2,8 @@ import { Module } from "@nestjs/common";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { SequelizeModule } from "@nestjs/sequelize";
-import { User } from "./models/user.model";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
-import { ResetPassword } from "./models/reset.model";
 import { RoleGuard } from "./guards/role.guard";
 import { MailModule } from "../mail/mail.module";
 
@@ -23,9 +21,9 @@ import { MailModule } from "../mail/mail.module";
         }
       },
       inject: [ConfigService]
-    }), SequelizeModule.forFeature([User,ResetPassword]),MailModule ],
+    }),MailModule ],
     controllers  : [AuthController,],
     providers : [AuthService],
-     exports:[SequelizeModule.forFeature([User,]),AuthService]
+     exports:[AuthService]
 })
 export class AuthModule{}

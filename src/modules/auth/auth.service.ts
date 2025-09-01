@@ -1,13 +1,9 @@
 import { BusinessException } from 'src/common/exceptions/bussiness.exception';
 import { RegisterDto } from './dto/register.dto';
-import { BadRequestException, HttpException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { User } from './models/user.model';
 import { LoginDto } from './dto/login.dto';
 import {JwtService} from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { ResetDto, ResetPasswordDto } from './dto/reset.dto';
-import { ResetPassword } from './models/reset.model';
 import { Op, Sequelize,QueryTypes } from 'sequelize';
 import { MailService } from '../mail/mail.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -18,8 +14,6 @@ export class AuthService {
     private readonly sequelize: Sequelize,
     private mailService :MailService,
     private jwtService : JwtService,
-    @InjectModel(User) private userModel: typeof User,
-    @InjectModel(ResetPassword) private resetPasswordModel : typeof ResetPassword
 ) {}
 
   async register(registerDto: RegisterDto) {
@@ -64,7 +58,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
-
+console.log(1)
       const [user] = await this.sequelize.query(
     `SELECT id, name, email, password, role_id 
      FROM users 
@@ -76,12 +70,12 @@ export class AuthService {
     },
   );
     if (!user) throw new BusinessException('Invalid credentials');
+    console.log(12)
 
     const hashedPassword = user['password']
     const roleId = user['roleId']
     const comparePassword =  await bcrypt.compare(password,hashedPassword)
     if(!comparePassword) throw new BusinessException("Invalid credentials")
-
     const token = await this.createToken({userId: user['id'],roleId})
      await this.sequelize.query(
     `UPDATE users SET token = :token WHERE id = :id`,
@@ -90,6 +84,7 @@ export class AuthService {
       type: QueryTypes.UPDATE,
     },
   );
+  console.log(3)
     return {
         name : user['name'],
         token : token

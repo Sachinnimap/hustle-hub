@@ -25,7 +25,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (errorResponse.statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
       errorResponse =  new Response(500,exceptionMsg) // this will store in db as error logger
-      console.log("INTERNAL SERVER ERROR",exceptionMsg) 
+      // console.log("INTERNAL SERVER ERROR",exceptionMsg) 
     }
     response.status(errorResponse.statusCode).json(errorResponse);
   }
