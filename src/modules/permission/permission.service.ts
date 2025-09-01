@@ -1,14 +1,14 @@
 import { BusinessException } from "src/common/exceptions/bussiness.exception";
 import { CreatePermissionDto } from "./dto/permission.dto";
 import { Permission } from "./models/permission.model";
-import { InjectModel } from "@nestjs/sequelize";
+import { InjectConnection, InjectModel } from "@nestjs/sequelize";
 import { Injectable } from "@nestjs/common";
 import { Op, QueryTypes, Sequelize } from 'sequelize';
 
 @Injectable()
 export class PermissionService{
     
-    constructor(private sequelize :Sequelize,@InjectModel(Permission) private permissionModel : typeof Permission){}
+    constructor(@InjectConnection() private readonly sequelize :Sequelize,@InjectModel(Permission) private permissionModel : typeof Permission){}
 
 async createPermission(body: CreatePermissionDto) {
   const { baseUrl, method, path, actionName, description } = body;

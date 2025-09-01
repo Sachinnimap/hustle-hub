@@ -10,13 +10,15 @@ import { JobModule } from './modules/job/job.module';
 import { JobApplyModule } from './modules/job-apply/job-apply.module';
 import { MailModule } from './modules/mail/mail.module';
 import { ExportModule } from './modules/export/export.module';
+import { SequelizeModule } from '@nestjs/sequelize';
 
 @Module({
   imports: [
-      ConfigModule.forRoot({
-        isGlobal : true,
-        load :[configuration]
-      }),
+    ConfigModule.forRoot({
+      isGlobal : true,
+      load :[configuration]
+    }),
+    SequelizeModule,
       AuthModule,
       DatabaseModule,
       // PermissionModule,

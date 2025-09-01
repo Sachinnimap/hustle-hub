@@ -1,4 +1,4 @@
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CreateJobApplyDto } from './dto/create-job-apply.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { MailService } from '../mail/mail.service';
@@ -7,7 +7,7 @@ import { BusinessException } from 'src/common/exceptions/bussiness.exception';
 
 export class JobApplyService {
   constructor(
-    private sequelize :Sequelize,
+    @InjectConnection() private  readonly sequelize :Sequelize,
     private mailService: MailService
   ) {}
 

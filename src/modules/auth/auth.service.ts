@@ -7,11 +7,12 @@ import { ResetDto, ResetPasswordDto } from './dto/reset.dto';
 import { Op, Sequelize,QueryTypes } from 'sequelize';
 import { MailService } from '../mail/mail.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { InjectConnection } from '@nestjs/sequelize';
 
 
 export class AuthService {
   constructor(
-    private readonly sequelize: Sequelize,
+      @InjectConnection()  private readonly sequelize: Sequelize,
     private mailService :MailService,
     private jwtService : JwtService,
 ) {}
@@ -23,7 +24,7 @@ export class AuthService {
       throw new BusinessException('Password not matched!');
 
     const [user] =  await this.sequelize.query(
-    `SELECT id FROM users WHERE email = :email LIMIT 1`,
+    `SELECT id FROM user WHERE email = :email LIMIT 1`,
     {
       replacements: { email },
       type: QueryTypes.SELECT,
@@ -32,7 +33,7 @@ export class AuthService {
 
   if (user) throw new BusinessException('User already exist');
    const [userData] = await this.sequelize.query(
-    `INSERT INTO users (name, email, password, mobile, role_id)
+    `INSERT INTO user (name, email, password, mobile, role_id)
      VALUES (:name, :email, :password, :mobile, 3)
      RETURNING id, name, role_id`,
     {
@@ -44,7 +45,7 @@ export class AuthService {
    const token = await this.createToken({userId:userData['id'],roleId:userData['roleId']??3})
                  
    await this.sequelize.query(
-    `UPDATE users SET token = :token WHERE id = :id`,
+    `UPDATE user SET token = :token WHERE id = :id`,
     {
       replacements: { token, id: userData['id'] },
       type: QueryTypes.UPDATE,
@@ -61,7 +62,7 @@ export class AuthService {
 console.log(1)
       const [user] = await this.sequelize.query(
     `SELECT id, name, email, password, role_id 
-     FROM users 
+     FROM "user"
      WHERE email = :email 
      LIMIT 1`,
     {
@@ -78,7 +79,7 @@ console.log(1)
     if(!comparePassword) throw new BusinessException("Invalid credentials")
     const token = await this.createToken({userId: user['id'],roleId})
      await this.sequelize.query(
-    `UPDATE users SET token = :token WHERE id = :id`,
+    `UPDATE "user" SET token = :token WHERE id = :id`,
     {
       replacements: { token, id: user['id'] },
       type: QueryTypes.UPDATE,
@@ -94,7 +95,7 @@ console.log(1)
   async logout(req:any){
     const {userId}= req.user;
        await this.sequelize.query(
-    `UPDATE users 
+    `UPDATE "user"
      SET token = NULL 
      WHERE id = :id`,
     {
@@ -108,7 +109,7 @@ console.log(1)
   async resetPassword(body : ResetDto){
     const {email} =  body;
      const [getUser] = await this.sequelize.query(
-    `SELECT id FROM user WHERE email = :email LIMIT 1`,
+    `SELECT id FROM "user" WHERE email = :email LIMIT 1`,
     {
       replacements: { email },
       type: QueryTypes.SELECT,
@@ -163,7 +164,7 @@ console.log(1)
 
     if(userData["otp"] != otp) throw new BusinessException("Invalid OTP")
      await this.sequelize.query(
-    `UPDATE users SET password = :password WHERE email = :email`,
+    `UPDATE "user" SET password = :password WHERE email = :email`,
     {
       replacements: { password, email },
       type:QueryTypes.UPDATE,
@@ -180,7 +181,7 @@ async getAllCandidates(query :PaginationDto ){
     const candidates = await this.sequelize.query(
     `
       SELECT name, mobile, email, "createdAt", "updatedAt"
-      FROM users
+      FROM "user"
       WHERE deleted = false AND "roleId" = 3
       ORDER BY id DESC
       LIMIT :limit OFFSET :offset
@@ -194,7 +195,7 @@ async getAllCandidates(query :PaginationDto ){
     const [result] = await this.sequelize.query(
     `
       SELECT COUNT(*)::int AS total
-      FROM users
+      FROM "user"
       WHERE deleted = false AND "roleId" = 3
     `,
     {
@@ -216,7 +217,7 @@ async getAllRecruiters(query: PaginationDto) {
   const recruiters = await this.sequelize.query(
     `
       SELECT name, mobile, email, "createdAt", "updatedAt"
-      FROM users
+      FROM "user"
       WHERE deleted = false AND "roleId" = 2
       ORDER BY id DESC
       LIMIT :limit OFFSET :offset
@@ -231,7 +232,7 @@ async getAllRecruiters(query: PaginationDto) {
   const [result] = await this.sequelize.query(
     `
       SELECT COUNT(*)::int AS total
-      FROM users
+      FROM "user"
       WHERE deleted = false AND "roleId" = 2
     `,
     {
@@ -249,7 +250,7 @@ async getAllRecruiters(query: PaginationDto) {
 async delete(id: number) {
   await this.sequelize.query(
     `
-      UPDATE users
+      UPDATE "user"
       SET deleted = true
       WHERE id = :id AND "roleId" != 1
       RETURNING id
