@@ -1,6 +1,6 @@
 import { BusinessException } from 'src/common/exceptions/bussiness.exception';
 import { RegisterDto } from './dto/register.dto';
-import { BadRequestException, HttpException } from '@nestjs/common';
+import { BadRequestException, HttpException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './models/user.model';
 import { LoginDto } from './dto/login.dto';
@@ -11,13 +11,16 @@ import { ResetPassword } from './models/reset.model';
 import { Op } from 'sequelize';
 import { MailService } from '../mail/mail.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { CACHE_MANAGER} from '@nestjs/cache-manager'
+import  type { Cache } from 'cache-manager';
 
 export class AuthService {
   constructor(
     private mailService :MailService,
     private jwtService : JwtService,
     @InjectModel(User) private userModel: typeof User,
-    @InjectModel(ResetPassword) private resetPasswordModel : typeof ResetPassword
+    @InjectModel(ResetPassword) private resetPasswordModel : typeof ResetPassword,
+    @Inject(CACHE_MANAGER) private cacheManager :  Cache
 ) {}
 
   async register(registerDto: RegisterDto) {
@@ -32,6 +35,10 @@ export class AuthService {
    const userData =  await this.userModel.create({ name, email, password, mobile });
    const token = await this.createToken({userId:userData.id,roleId:userData.getDataValue('roleId')??3})
                  await userData.update({token},{where :{individualHooks: false}})
+              
+                 //redis
+               await this.cacheManager.del('userDetails')
+               await this.cacheManager.set('userDetails',userData,3600 * 1000)
     return {
         name : userData.name,
         token : token
@@ -52,6 +59,12 @@ export class AuthService {
 
     const token = await this.createToken({userId: user.id,roleId})
      await user.update({token},{where :{individualHooks: false}})
+         //redis
+               await this.cacheManager.del('userDetails')
+               await this.cacheManager.set('userDetails',JSON.stringify(user),3600 * 1000)
+
+               const userDetails =  await this.cacheManager.get('userDetails')
+               console.log('userDetails',userDetails)
     return {
         name : user.name,
         token : token
@@ -61,6 +74,7 @@ export class AuthService {
   async logout(req:any){
     const {userId}= req.user;
         await this.userModel.update({token:null},{where:{id:userId}})
+        await this.cacheManager.del('userDetails')
         return null;
   }
  
