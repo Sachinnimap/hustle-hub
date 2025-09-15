@@ -41,6 +41,7 @@ export class AuthUserGuard implements CanActivate {
         if(isValidUser.length == 0){
            throw new UnauthorizedException(`Invalid Token`);
         }
+
       request.user = {
         userId: userId,
         roleId: roleId

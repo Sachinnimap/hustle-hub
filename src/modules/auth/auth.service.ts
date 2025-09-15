@@ -81,7 +81,7 @@ console.log(1)
     console.log(12)
 
     const hashedPassword = user['password']
-    const roleId = user['roleId']
+    const roleId = user['role_id']
     const comparePassword =  await bcrypt.compare(password,hashedPassword)
     if(!comparePassword) throw new BusinessException("Invalid credentials")
     const token = await this.createToken({userId: user['id'],roleId})
@@ -205,7 +205,7 @@ async getAllCandidates(query :PaginationDto ){
     `
       SELECT name, mobile, email, "createdAt", "updatedAt"
       FROM "user"
-      WHERE deleted = false AND "roleId" = 3
+      WHERE deleted = false AND role_id = 3
       ORDER BY id DESC
       LIMIT :limit OFFSET :offset
     `,
@@ -219,7 +219,7 @@ async getAllCandidates(query :PaginationDto ){
     `
       SELECT COUNT(*)::int AS total
       FROM "user"
-      WHERE deleted = false AND "roleId" = 3
+      WHERE deleted = false AND role_id= 3
     `,
     {
       type: QueryTypes.SELECT,
@@ -235,13 +235,13 @@ async getAllCandidates(query :PaginationDto ){
 async getAllRecruiters(query: PaginationDto) {
   const { pageNo = 1, limit = 10 } = query;
   const offset = (pageNo - 1) * limit;
-
+console.log(1)
   // 1. Fetch paginated recruiters
   const recruiters = await this.sequelize.query(
     `
       SELECT name, mobile, email, "createdAt", "updatedAt"
       FROM "user"
-      WHERE deleted = false AND "roleId" = 2
+      WHERE deleted = false AND role_id = 2
       ORDER BY id DESC
       LIMIT :limit OFFSET :offset
     `,
@@ -250,18 +250,19 @@ async getAllRecruiters(query: PaginationDto) {
       type: QueryTypes.SELECT,
     },
   );
-
+console.log(2)
   // 2. Get total count
   const [result] = await this.sequelize.query(
     `
       SELECT COUNT(*)::int AS total
       FROM "user"
-      WHERE deleted = false AND "roleId" = 2
+      WHERE deleted = false AND role_id = 2
     `,
     {
       type: QueryTypes.SELECT,
     },
   );
+  console.log(3,result)
 
   return {
     total: result["total"],
@@ -275,7 +276,7 @@ async delete(id: number) {
     `
       UPDATE "user"
       SET deleted = true
-      WHERE id = :id AND "roleId" != 1
+      WHERE id = :id AND role_id != 1
       RETURNING id
     `,
     {
