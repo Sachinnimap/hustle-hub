@@ -1,7 +1,13 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import {Response} from 'express';
 import { ExportService } from './export.service';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { AuthUserGuard } from '../auth/guards/auth.guard';
+import { RoleGuard } from '../auth/guards/role.guard';
 
+@ApiTags('export data')
+@ApiBearerAuth('JWT-auth')
+@UseGuards(AuthUserGuard, RoleGuard)
 @Controller('export')
 export class ExportController {
   constructor(private readonly exportService: ExportService) {}

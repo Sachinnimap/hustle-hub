@@ -15,5 +15,8 @@ export default () => ({
     mail : {
         smtp_user : process.env.SMTP_USER,
         smtp_pass : process.env.SMTP_PASS
+    },
+    redis : {
+        url : process.env.REDIS_URL
     }
 })

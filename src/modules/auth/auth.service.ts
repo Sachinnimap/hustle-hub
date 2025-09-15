@@ -8,13 +8,14 @@ import { Op, Sequelize,QueryTypes } from 'sequelize';
 import { MailService } from '../mail/mail.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { InjectConnection } from '@nestjs/sequelize';
-
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 
 export class AuthService {
   constructor(
       @InjectConnection()  private readonly sequelize: Sequelize,
     private mailService :MailService,
     private jwtService : JwtService,
+        private cacheService: RedisCacheService,
 ) {}
 
   async register(registerDto: RegisterDto) {
@@ -51,6 +52,12 @@ export class AuthService {
       type: QueryTypes.UPDATE,
     },
   );
+
+   //redis
+    await this.cacheService.set(token, userData, 3600 * 1000);
+    console.log('token', token);
+    //  await this.cacheManager.set(token,userData,3600 * 1000)
+
     return {
         name : userData['name'],
         token : token
@@ -86,6 +93,10 @@ console.log(1)
     },
   );
   console.log(3)
+
+   //redis
+    await this.cacheService.set(token, JSON.stringify(user), 3600 * 1000);
+
     return {
         name : user['name'],
         token : token
@@ -94,6 +105,17 @@ console.log(1)
 
   async logout(req:any){
     const {userId}= req.user;
+     const userData = await this.sequelize.query(
+    `select * from "user"
+     WHERE id = :id`,
+    {
+      replacements: { id: userId },
+      type: QueryTypes.SELECT,
+    },
+  );
+  if (!userData || userData.length === 0) {
+  throw new BusinessException(`User not found`);
+}
        await this.sequelize.query(
     `UPDATE "user"
      SET token = NULL 
@@ -103,6 +125,7 @@ console.log(1)
       type: QueryTypes.UPDATE,
     },
   );
+   await this.cacheService.del(userData[0]?.['token']);
         return null;
   }
  

@@ -6,6 +6,8 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { RoleGuard } from "./guards/role.guard";
 import { MailModule } from "../mail/mail.module";
+import { RedisCacheModule } from "src/cache/redis-cache.module";
+import { AuthUserGuard } from "./guards/auth.guard";
 
 
 @Module({

@@ -11,7 +11,7 @@ import { JobApplyModule } from './modules/job-apply/job-apply.module';
 import { MailModule } from './modules/mail/mail.module';
 import { ExportModule } from './modules/export/export.module';
 import { SequelizeModule } from '@nestjs/sequelize';
-
+import { RedisCacheModule } from './cache/redis-cache.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -19,6 +19,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
       load :[configuration]
     }),
     SequelizeModule,
+      RedisCacheModule,
       AuthModule,
       DatabaseModule,
       // PermissionModule,
@@ -31,7 +32,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter
-    }
+    },
   ],
 })
 export class AppModule {}
