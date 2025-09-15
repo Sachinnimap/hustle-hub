@@ -7,16 +7,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
  const app = await NestFactory.create(AppModule);
- const options = new DocumentBuilder()
-    .setTitle('Hustle-hub')
-    .setDescription('all apis of hustle hub application')
-    .setVersion('1.0')
-    .addServer('api-docs', 'Local environment')
-    .addTag('Your API Tag')
-    .build();
-
-const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api-docs', app, document);
 
  const configService =  app.get(ConfigService)
  
@@ -31,6 +21,23 @@ const document = SwaggerModule.createDocument(app, options);
   }));
 
  const port =  configService.get('port')
+
+  const options = new DocumentBuilder()
+    .setTitle('Hustle-hub')
+    .setDescription('apis documentation of hustle hub ')
+    .setVersion('1.0')
+    .addBearerAuth(  
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'JWT-auth', 
+    )
+    .build();
+
+const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup('api-docs', app, document);
 
  await app.listen(port, ()=>{
     console.log(`server running on port : ${port}`)

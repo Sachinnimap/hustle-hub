@@ -10,29 +10,14 @@ import { JobModule } from './modules/job/job.module';
 import { JobApplyModule } from './modules/job-apply/job-apply.module';
 import { MailModule } from './modules/mail/mail.module';
 import { ExportModule } from './modules/export/export.module';
-import {CacheModule} from '@nestjs/cache-manager'
-// import * as redisStore from 'cache-manager-redis-store';
-
+import { RedisCacheModule } from './cache/redis-cache.module';
 @Module({
   imports: [
       ConfigModule.forRoot({
         isGlobal : true,
         load :[configuration]
       }),
-    //   CacheModule.registerAsync({
-    //   useFactory: async () => ({
-    //     store: await redisStore({
-    //       socket: {
-    //         host: '127.0.0.1',
-    //         port: 6379,
-    //       },
-    //       ttl: 0, // 1 hour default
-    //     }),
-    //   }),
-    // }),
-      CacheModule.register({
-          isGlobal : true,
-      }),
+      RedisCacheModule,
       AuthModule,
       DatabaseModule,
       PermissionModule,
@@ -45,7 +30,7 @@ import {CacheModule} from '@nestjs/cache-manager'
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter
-    }
+    },
   ],
 })
 export class AppModule {}

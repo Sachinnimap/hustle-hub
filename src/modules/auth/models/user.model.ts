@@ -42,7 +42,8 @@ export class User extends AbstractModel {
 
     @Column({
         type : DataType.STRING,
-        // allowNull : false,
+        allowNull : true
+        
     })
     token : string;
 

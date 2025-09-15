@@ -1,9 +1,11 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { ArrayNotEmpty, IsArray, IsInt, IsNotEmpty, IsNumber } from "class-validator";
 
 
 export class CreateJobApplyDto{
 
+    @ApiProperty()
     @IsNumber()
     @IsNotEmpty({message: "Job id required!"})
     jobId : number;
